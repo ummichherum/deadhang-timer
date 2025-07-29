@@ -117,7 +117,7 @@ export const TimerProvider: React.FC<TimerProviderProps> = ({ children }) => {
         if (nextPhaseData.isNewRep) {
           dispatch({
             type: 'NEXT_REP',
-            nextRep: state.currentRep + 1
+            nextRep: currentState.currentRep + 1
           });
         }
         

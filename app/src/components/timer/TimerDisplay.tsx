@@ -19,7 +19,7 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
     start: 'Bereit zum Start',
     hang: 'Hängen',
     rest: 'Pause',
-    finished: 'Fertig'
+    end: 'Fertig'
   };
 
   return (

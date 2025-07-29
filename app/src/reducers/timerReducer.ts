@@ -32,7 +32,7 @@ export const calculateNextPhase = (
       // After hang phase: check if this was the last rep
       if (currentRep >= totalReps) {
         // Last rep completed - workout finished
-        return { phase: 'start', isNewRep: false, isFinished: true }
+        return { phase: 'end', isNewRep: false, isFinished: true }
       }
       // More reps to go - go to rest phase
       return { phase: 'rest', isNewRep: false, isFinished: false }
@@ -171,7 +171,7 @@ export const timerReducer = (state: TimerState, action: TimerAction): TimerState
       return {
         ...state,
         status: 'finished',
-        currentPhase: 'start',
+        currentPhase: 'end',
         timeLeft: 0
       }
 

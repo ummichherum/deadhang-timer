@@ -6,7 +6,7 @@ import type { WorkoutProfile } from './workout'
 export type TimerStatus = 'idle' | 'running' | 'paused' | 'finished'
 
 // Timer phase types (workout flow)
-export type TimerPhase = 'start' | 'hang' | 'rest'
+export type TimerPhase = 'start' | 'hang' | 'rest' | 'end'
 
 // Timer state interface
 export interface TimerState {

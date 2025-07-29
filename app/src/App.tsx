@@ -189,10 +189,10 @@ const TimerDemo: React.FC = () => {
                 />
               </div>
 
-              {/* Debug Info - Hidden on mobile */}
-              {state.workoutProfile && (
+              {/* Debug Info - Development only */}
+              {import.meta.env.DEV && state.workoutProfile && (
                 <div className="debug-panel card">
-                  <h4 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Debug Info:</h4>
+                  <h4 className="font-semibold mb-2 text-gray-900 dark:text-gray-100">Debug Info (Dev Mode):</h4>
                   <div className="space-y-1 font-mono text-xs text-gray-600 dark:text-gray-400">
                     <div>Status: <span className="text-blue-600 dark:text-blue-400">{state.status}</span></div>
                     <div>Phase: <span className="text-blue-600 dark:text-blue-400">{state.currentPhase}</span></div>

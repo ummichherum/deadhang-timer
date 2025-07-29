@@ -176,9 +176,9 @@
 
 
 
-  /* Hide debug panel on mobile */
+  /* Debug panel (Development only via JS) */
   .debug-panel {
-    @apply hidden md:block;
+    @apply block;
   }
 
   /* Mobile-specific layout improvements */

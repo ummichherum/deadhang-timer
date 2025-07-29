@@ -1,0 +1,270 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+  }
+  
+  /* Touch optimization for all interactive elements */
+  button, [role="button"], input, select, textarea {
+    touch-action: manipulation;
+  }
+}
+
+@layer components {
+  /* Card component */
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700;
+  }
+
+  /* Button variants - Enhanced Touch optimized */
+  .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-700 focus:bg-blue-700 text-white font-semibold rounded-xl 
+           px-6 py-4 md:px-8 md:py-3 transition-all duration-200 shadow-md hover:shadow-lg 
+           focus:outline-none focus:ring-4 focus:ring-blue-500/50
+           active:scale-95 transform touch-manipulation
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
+           min-h-[52px] md:min-h-[44px] text-base md:text-sm;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-600 hover:bg-gray-700 focus:bg-gray-700 text-white font-semibold rounded-xl 
+           px-6 py-4 md:px-8 md:py-3 transition-all duration-200 shadow-md hover:shadow-lg 
+           focus:outline-none focus:ring-4 focus:ring-gray-500/50
+           active:scale-95 transform touch-manipulation
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
+           min-h-[52px] md:min-h-[44px] text-base md:text-sm;
+  }
+  
+  .btn-danger {
+    @apply bg-red-600 hover:bg-red-700 focus:bg-red-700 text-white font-semibold rounded-xl 
+           px-6 py-4 md:px-8 md:py-3 transition-all duration-200 shadow-md hover:shadow-lg 
+           focus:outline-none focus:ring-4 focus:ring-red-500/50
+           active:scale-95 transform touch-manipulation
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
+           min-h-[52px] md:min-h-[44px] text-base md:text-sm;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 
+           font-medium rounded-xl px-4 py-3 md:px-4 md:py-2 transition-all duration-200
+           focus:outline-none focus:ring-4 focus:ring-gray-500/50
+           active:scale-95 transform touch-manipulation
+           min-h-[48px] md:min-h-[36px];
+  }
+
+  /* Input components */
+  .input-field {
+    @apply w-full px-4 py-4 md:py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 
+           rounded-xl text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400
+           focus:outline-none focus:ring-4 focus:ring-blue-500/50 focus:border-blue-500 dark:focus:border-blue-400
+           transition-all duration-200 touch-manipulation
+           disabled:opacity-50 disabled:cursor-not-allowed
+           min-h-[52px] md:min-h-[44px] text-base;
+  }
+
+  /* Enhanced Timer display styles */
+  .timer-display {
+    @apply text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-mono font-bold text-center 
+           text-gray-900 dark:text-gray-100 tracking-wider leading-none;
+  }
+
+  .timer-phase {
+    @apply text-base sm:text-lg md:text-xl font-semibold text-center text-gray-600 dark:text-gray-400 mb-2 md:mb-4;
+  }
+
+  /* Phase indicator styles - Mobile optimized */
+  .phase-dot {
+    @apply w-4 h-4 sm:w-3 sm:h-3 rounded-full transition-all duration-300;
+  }
+  
+  .phase-dot-active {
+    @apply bg-blue-500 ring-4 ring-blue-500/30 scale-125;
+  }
+  
+  .phase-dot-completed {
+    @apply bg-green-500;
+  }
+  
+  .phase-dot-pending {
+    @apply bg-gray-300 dark:bg-gray-600;
+  }
+
+  /* Phase Timeline - Modern connected workflow */
+  .phase-timeline-container {
+    @apply w-full flex justify-center items-center px-4 sm:px-6 py-4 sm:py-2 overflow-visible;
+  }
+
+  .phase-timeline-track {
+    @apply flex items-center justify-center gap-2 sm:gap-3 md:gap-4 max-w-full overflow-visible;
+  }
+
+  .phase-timeline-item {
+    @apply flex flex-col items-center justify-center flex-shrink-0 min-w-[60px] sm:min-w-[70px];
+  }
+
+  .phase-timeline-icon {
+    @apply w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 
+           rounded-full flex items-center justify-center
+           text-sm sm:text-lg md:text-xl mb-1 sm:mb-2 
+           transition-all duration-300 touch-target;
+  }
+
+  .phase-timeline-label {
+    @apply text-xs sm:text-sm font-medium text-center leading-tight
+           transition-colors duration-300 whitespace-nowrap;
+  }
+
+  /* Slow spin animation for rotation symbol */
+  @keyframes spin-slow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animate-spin-slow {
+    animation: spin-slow 3s linear infinite;
+  }
+
+  /* Mobile-specific phase timeline adjustments */
+  @media (max-width: 640px) {
+    .phase-timeline-container {
+      @apply px-3 py-6;
+    }
+    
+    .phase-timeline-track {
+      @apply gap-1;
+    }
+    
+    .phase-timeline-item {
+      @apply min-w-[50px];
+    }
+    
+    .phase-timeline-icon {
+      @apply w-9 h-9 text-sm mb-1;
+    }
+    
+    .phase-timeline-label {
+      @apply text-xs leading-none;
+    }
+  }
+
+
+
+  /* Timer Controls - Mobile first */
+  .timer-controls {
+    @apply flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center;
+  }
+
+  .timer-control-button {
+    @apply flex-1 sm:flex-none min-w-[120px] max-w-[200px] mx-auto sm:mx-0;
+  }
+
+  /* Timer Container - Mobile optimized spacing */
+  .timer-container {
+    @apply space-y-6 sm:space-y-8 px-4 py-6 sm:px-6 sm:py-8;
+  }
+
+
+
+  /* Hide debug panel on mobile */
+  .debug-panel {
+    @apply hidden md:block;
+  }
+
+  /* Mobile-specific layout improvements */
+  @media (max-width: 640px) {
+    .mobile-optimized {
+      @apply px-4 py-2;
+    }
+    
+    /* Larger touch targets for mobile */
+    .btn-primary, .btn-secondary, .btn-danger {
+      @apply py-4 px-8 text-lg min-h-[56px] font-semibold;
+    }
+    
+    .btn-ghost {
+      @apply py-3 text-base min-h-[48px];
+    }
+    
+    /* Mobile header adjustments */
+    .mobile-header {
+      @apply px-4 py-3 text-lg;
+    }
+    
+    /* Improved mobile spacing */
+    .mobile-spacing {
+      @apply space-y-4;
+    }
+    
+    /* Mobile-specific timer spacing */
+    .timer-mobile-layout {
+      @apply space-y-6 pb-8;
+    }
+  }
+
+  /* Landscape orientation optimizations */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .timer-display {
+      @apply text-4xl sm:text-5xl;
+    }
+    
+    .timer-container {
+      @apply space-y-3 py-4;
+    }
+  }
+}
+
+@layer utilities {
+  /* Enhanced Touch-friendly minimum target sizes */
+  .touch-target {
+    @apply min-h-[48px] min-w-[48px] md:min-h-[44px] md:min-w-[44px];
+  }
+  
+  .touch-target-large {
+    @apply min-h-[56px] min-w-[56px];
+  }
+  
+  /* Safe area support for mobile devices */
+  .safe-area-padding {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Prevent text selection on touch elements */
+  .no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  /* Mobile-specific visibility utilities */
+  .mobile-only {
+    @apply block sm:hidden;
+  }
+  
+  .desktop-only {
+    @apply hidden sm:block;
+  }
+
+  /* Responsive padding utilities */
+  .responsive-padding {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+
+  .responsive-margin {
+    @apply mx-4 sm:mx-6 lg:mx-8;
+  }
+}

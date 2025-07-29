@@ -1,0 +1,46 @@
+---
+alwaysApply: true
+---
+
+# Deadhang Timer - Project Structure & Tech Stack
+
+## Tech Stack
+- **Frontend**: React 18 + TypeScript 5
+- **Build Tool**: Vite with PWA Plugin
+- **State Management**: React Context + useReducer (NO external state libraries)
+- **Styling**: TailwindCSS (mobile-first)
+- **Audio**: Web Audio API + predefined MP3 files
+- **PWA**: Service Worker for offline functionality
+- **Testing**: Vitest + Testing Library + Playwright
+- **Deployment**: Netlify
+
+## Project Structure
+```
+src/
+├── components/           # UI Components
+│   ├── common/          # Reusable components
+│   ├── timer/           # Timer-specific components  
+│   └── setup/           # Configuration components
+├── contexts/            # React Context Definitions
+│   ├── TimerContext.tsx
+│   ├── SettingsContext.tsx
+│   ├── ProfileContext.tsx
+│   └── StatisticsContext.tsx
+├── reducers/            # useReducer Logic
+│   ├── timerReducer.ts
+│   ├── settingsReducer.ts
+│   └── profileReducer.ts
+├── hooks/               # Custom React Hooks
+├── services/            # Business Logic Services
+├── types/               # TypeScript Definitions
+├── workers/             # Web Workers for Timer
+└── utils/               # Utility Functions
+```
+
+## Architecture Principles
+- **Mobile-First**: Primary target is mobile browsers (iOS Safari, Chrome Mobile)
+- **PWA**: Full offline functionality, installable
+- **Local-Only**: No cloud sync, localStorage only
+- **TypeScript-First**: Strict typing everywhere
+- **Performance**: Web Workers for background timers
+- **Accessibility**: WCAG 2.1 AA compliance

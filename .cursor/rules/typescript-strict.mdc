@@ -1,0 +1,127 @@
+---
+globs: *.ts,*.tsx
+---
+
+# TypeScript - Strict Typing Rules
+
+## Mandatory TypeScript Settings
+- **Strict Mode**: Always enabled in tsconfig.json
+- **Build Target**: ES2020 (modern browsers only)
+- **Path Mapping**: Use @/components, @/services, @/types aliases
+
+## Type Safety Requirements
+
+### 1. Explicit Return Types
+```typescript
+// ALWAYS define return types for functions
+function calculateNextPhase(currentPhase: TimerPhase): TimerPhase {
+  // implementation
+}
+
+// NO implicit any returns
+function badFunction() { // ❌ 
+  return someValue;
+}
+```
+
+### 2. Interface over Type Aliases
+```typescript
+// PREFER interfaces for object shapes
+interface WorkoutProfile {
+  id: string;
+  name: string;
+  repetitions: number;
+  hangTimes: number[] | number;
+  pauseTimes: number[] | number;
+  startPause: number;
+  isTemplate: boolean;
+  createdAt: Date;
+}
+
+// Use type aliases only for unions/primitives
+type TimerStatus = 'idle' | 'running' | 'paused' | 'finished';
+type TimerPhase = 'start' | 'hang' | 'rest';
+```
+
+### 3. Strict Event Handlers
+```typescript
+// ALWAYS type event handlers explicitly
+const handleStartTimer = (event: React.MouseEvent<HTMLButtonElement>): void => {
+  // implementation
+};
+
+// Type custom events
+interface TimerWorkerMessage {
+  type: 'TICK' | 'PHASE_CHANGE' | 'TIMER_END';
+  payload: {
+    timeLeft: number;
+    currentPhase: TimerPhase;
+  };
+}
+```
+
+### 4. Context Type Safety
+```typescript
+// ALWAYS provide typed context with null safety
+interface TimerContextType {
+  state: TimerState;
+  dispatch: React.Dispatch<TimerAction>;
+}
+
+const TimerContext = React.createContext<TimerContextType | null>(null);
+
+// Custom hook with proper error handling
+export const useTimer = (): TimerContextType => {
+  const context = useContext(TimerContext);
+  if (!context) {
+    throw new Error('useTimer must be used within TimerProvider');
+  }
+  return context;
+};
+```
+
+### 5. Service Classes
+```typescript
+// Services MUST have typed interfaces
+interface AudioService {
+  playStartSound(): Promise<void>;
+  playEndSound(): Promise<void>;
+  playPhaseChangeSound(): Promise<void>;
+  playCountdownTick(): Promise<void>;
+  setVolume(level: number): void;
+  isAudioEnabled(): boolean;
+}
+
+class WebAudioService implements AudioService {
+  // implementation with return types
+}
+```
+
+## Prohibited Patterns
+- ❌ `any` type (use `unknown` if necessary)
+- ❌ `@ts-ignore` comments
+- ❌ Non-null assertion (`!`) unless absolutely necessary
+- ❌ Implicit function returns
+- ❌ Untyped props in React components
+
+## Required Props Typing
+```typescript
+// ALWAYS type all component props
+interface TimerDisplayProps {
+  timeLeft: number;
+  currentPhase: TimerPhase;
+  isRunning: boolean;
+  onPause: () => void;
+  onStop: () => void;
+}
+
+const TimerDisplay: React.FC<TimerDisplayProps> = ({ 
+  timeLeft, 
+  currentPhase, 
+  isRunning, 
+  onPause, 
+  onStop 
+}) => {
+  // implementation
+};
+```

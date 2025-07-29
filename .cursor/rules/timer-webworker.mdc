@@ -1,0 +1,252 @@
+---
+globs: *.worker.ts,*Timer*.ts,*Timer*.tsx
+---
+
+# Timer & Web Worker Architecture
+
+## Timer Requirements
+- **Background Operation**: Timer continues when browser tab is inactive
+- **Precision**: Second-accurate timing (no millisecond precision needed)
+- **Performance**: No UI blocking during timer operations
+- **Communication**: Bidirectional messaging between worker and main thread
+
+## Web Worker Implementation
+
+### Worker File Structure
+```typescript
+// workers/timerWorker.ts
+interface TimerWorkerMessage {
+  type: 'START' | 'PAUSE' | 'RESUME' | 'STOP' | 'TICK' | 'PHASE_CHANGE' | 'TIMER_END';
+  payload?: {
+    timeLeft: number;
+    currentPhase: 'start' | 'hang' | 'rest';
+    currentRep: number;
+    totalReps: number;
+  };
+}
+
+// Worker state
+interface WorkerTimerState {
+  isRunning: boolean;
+  timeLeft: number;
+  currentPhase: 'start' | 'hang' | 'rest';
+  currentRep: number;
+  profile: WorkoutProfile | null;
+  intervalId: number | null;
+}
+
+let timerState: WorkerTimerState = {
+  isRunning: false,
+  timeLeft: 0,
+  currentPhase: 'start',
+  currentRep: 1,
+  profile: null,
+  intervalId: null
+};
+
+// Main worker event handler
+self.addEventListener('message', (event: MessageEvent<TimerWorkerMessage>) => {
+  const { type, payload } = event.data;
+  
+  switch (type) {
+    case 'START':
+      startTimer(payload as WorkoutProfile);
+      break;
+    case 'PAUSE':
+      pauseTimer();
+      break;
+    case 'RESUME':
+      resumeTimer();
+      break;
+    case 'STOP':
+      stopTimer();
+      break;
+  }
+});
+
+function startTimer(profile: WorkoutProfile): void {
+  timerState.profile = profile;
+  timerState.currentRep = 1;
+  timerState.currentPhase = 'start';
+  timerState.timeLeft = profile.startPause;
+  timerState.isRunning = true;
+  
+  runTimer();
+}
+
+function runTimer(): void {
+  if (timerState.intervalId) {
+    clearInterval(timerState.intervalId);
+  }
+  
+  timerState.intervalId = setInterval(() => {
+    if (!timerState.isRunning) return;
+    
+    timerState.timeLeft--;
+    
+    // Send tick update to main thread
+    postMessage({
+      type: 'TICK',
+      payload: {
+        timeLeft: timerState.timeLeft,
+        currentPhase: timerState.currentPhase,
+        currentRep: timerState.currentRep,
+        totalReps: timerState.profile!.repetitions
+      }
+    });
+    
+    // Phase transition logic
+    if (timerState.timeLeft <= 0) {
+      handlePhaseTransition();
+    }
+  }, 1000); // 1 second intervals
+}
+```
+
+## Main Thread Integration
+```typescript
+// services/TimerService.ts
+class TimerService {
+  private worker: Worker | null = null;
+  private onTimerUpdate?: (message: TimerWorkerMessage) => void;
+
+  constructor() {
+    this.initializeWorker();
+  }
+
+  private initializeWorker(): void {
+    try {
+      this.worker = new Worker(new URL('../workers/timerWorker.ts', import.meta.url));
+      
+      this.worker.addEventListener('message', (event: MessageEvent<TimerWorkerMessage>) => {
+        if (this.onTimerUpdate) {
+          this.onTimerUpdate(event.data);
+        }
+      });
+      
+      this.worker.addEventListener('error', (error) => {
+        console.error('Timer worker error:', error);
+      });
+    } catch (error) {
+      console.error('Failed to initialize timer worker:', error);
+      // Fallback to main thread timer if worker fails
+    }
+  }
+
+  startTimer(profile: WorkoutProfile): void {
+    if (!this.worker) return;
+    
+    this.worker.postMessage({
+      type: 'START',
+      payload: profile
+    });
+  }
+
+  pauseTimer(): void {
+    if (!this.worker) return;
+    
+    this.worker.postMessage({ type: 'PAUSE' });
+  }
+
+  setUpdateCallback(callback: (message: TimerWorkerMessage) => void): void {
+    this.onTimerUpdate = callback;
+  }
+
+  destroy(): void {
+    if (this.worker) {
+      this.worker.terminate();
+      this.worker = null;
+    }
+  }
+}
+```
+
+## Timer Context Integration
+```typescript
+// In TimerProvider
+const TimerProvider: React.FC<TimerProviderProps> = ({ children }) => {
+  const [state, dispatch] = useReducer(timerReducer, initialTimerState);
+  const timerService = useRef<TimerService>(new TimerService());
+
+  useEffect(() => {
+    // Set up worker message handler
+    timerService.current.setUpdateCallback((message) => {
+      switch (message.type) {
+        case 'TICK':
+          dispatch({
+            type: 'TICK',
+            newTime: message.payload!.timeLeft,
+            currentPhase: message.payload!.currentPhase,
+            currentRep: message.payload!.currentRep
+          });
+          break;
+        case 'PHASE_CHANGE':
+          dispatch({ type: 'NEXT_PHASE' });
+          break;
+        case 'TIMER_END':
+          dispatch({ type: 'TIMER_FINISHED' });
+          break;
+      }
+    });
+
+    return () => {
+      timerService.current.destroy();
+    };
+  }, []);
+
+  // Enhanced timer actions
+  const startTimer = useCallback((profile: WorkoutProfile) => {
+    timerService.current.startTimer(profile);
+    dispatch({ type: 'START_TIMER', profile });
+  }, []);
+
+  const pauseTimer = useCallback(() => {
+    timerService.current.pauseTimer();
+    dispatch({ type: 'PAUSE_TIMER' });
+  }, []);
+
+  const value = useMemo(() => ({
+    state,
+    startTimer,
+    pauseTimer,
+    // ... other actions
+  }), [state, startTimer, pauseTimer]);
+
+  return (
+    <TimerContext.Provider value={value}>
+      {children}
+    </TimerContext.Provider>
+  );
+};
+```
+
+## Timer Rules
+1. **Worker First**: Always try Web Worker, fallback to main thread
+2. **State Sync**: Keep worker and React state synchronized
+3. **Error Handling**: Graceful fallback if worker initialization fails
+4. **Resource Cleanup**: Always terminate worker on unmount
+5. **Message Typing**: Strictly type all worker messages
+6. **Interval Management**: Clear intervals properly to prevent memory leaks
+
+## Vite Configuration
+```typescript
+// vite.config.ts - Enable worker support
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  worker: {
+    format: 'es'
+  },
+  // Web Worker types
+  optimizeDeps: {
+    exclude: ['*.worker.ts']
+  }
+});
+```
+
+## Testing Strategy
+- Test timer accuracy with active/inactive tabs
+- Test worker termination and cleanup
+- Test fallback behavior when workers fail
+- Test rapid start/stop/pause operations
+- Test multiple timer instances (edge case)

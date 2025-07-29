@@ -1,0 +1,147 @@
+---
+globs: *Context.tsx,*Reducer.ts,*Provider.tsx
+---
+
+# React Context + useReducer Pattern
+
+## Context Architecture
+Use separate contexts for different domains:
+- **TimerContext**: Timer state and controls
+- **SettingsContext**: Theme, audio settings  
+- **ProfileContext**: Workout profiles management
+- **StatisticsContext**: Training history and stats
+
+## Context Implementation Pattern
+
+### 1. Context Definition
+```typescript
+// contexts/TimerContext.tsx
+interface TimerState {
+  status: 'idle' | 'running' | 'paused' | 'finished';
+  currentPhase: 'start' | 'hang' | 'rest';
+  timeLeft: number;
+  currentRep: number;
+  totalReps: number;
+  workoutProfile: WorkoutProfile | null;
+}
+
+type TimerAction = 
+  | { type: 'START_TIMER'; profile: WorkoutProfile }
+  | { type: 'PAUSE_TIMER' }
+  | { type: 'RESUME_TIMER' }
+  | { type: 'STOP_TIMER' }
+  | { type: 'TICK'; newTime: number }
+  | { type: 'NEXT_PHASE' }
+  | { type: 'NEXT_REP' };
+
+interface TimerContextType {
+  state: TimerState;
+  dispatch: React.Dispatch<TimerAction>;
+}
+
+const TimerContext = React.createContext<TimerContextType | null>(null);
+```
+
+### 2. Reducer Implementation
+```typescript
+// reducers/timerReducer.ts
+export const timerReducer = (state: TimerState, action: TimerAction): TimerState => {
+  switch (action.type) {
+    case 'START_TIMER':
+      return {
+        ...state,
+        status: 'running',
+        workoutProfile: action.profile,
+        currentRep: 1,
+        totalReps: action.profile.repetitions,
+        currentPhase: 'start',
+        timeLeft: action.profile.startPause
+      };
+    
+    case 'PAUSE_TIMER':
+      return {
+        ...state,
+        status: 'paused'
+      };
+    
+    case 'TICK':
+      return {
+        ...state,
+        timeLeft: action.newTime
+      };
+    
+    default:
+      return state;
+  }
+};
+```
+
+### 3. Provider Component
+```typescript
+// contexts/TimerContext.tsx
+interface TimerProviderProps {
+  children: React.ReactNode;
+}
+
+export const TimerProvider: React.FC<TimerProviderProps> = ({ children }) => {
+  const [state, dispatch] = useReducer(timerReducer, initialTimerState);
+  
+  const value = useMemo(() => ({
+    state,
+    dispatch
+  }), [state]);
+
+  return (
+    <TimerContext.Provider value={value}>
+      {children}
+    </TimerContext.Provider>
+  );
+};
+```
+
+### 4. Custom Hook
+```typescript
+// contexts/TimerContext.tsx
+export const useTimer = (): TimerContextType => {
+  const context = useContext(TimerContext);
+  if (!context) {
+    throw new Error('useTimer must be used within TimerProvider');
+  }
+  return context;
+};
+```
+
+## Provider Hierarchy
+```typescript
+// App.tsx - ALWAYS maintain this order
+<SettingsProvider>
+  <ProfileProvider>
+    <StatisticsProvider>
+      <TimerProvider>
+        <AppContent />
+      </TimerProvider>
+    </StatisticsProvider>
+  </ProfileProvider>
+</SettingsProvider>
+```
+
+## Context Rules
+1. **One Context Per Domain**: Don't mix unrelated state
+2. **Null Safety**: Always check context existence in hooks
+3. **Memoization**: Use useMemo for provider values
+4. **Error Boundaries**: Wrap providers in error boundaries
+5. **No Prop Drilling**: Use context for shared state, props for local state
+
+## Action Naming Convention
+- Use SCREAMING_SNAKE_CASE for action types
+- Prefix with domain: `TIMER_START`, `SETTINGS_UPDATE`
+- Use consistent verbs: `START`, `STOP`, `UPDATE`, `SET`, `TOGGLE`
+
+## Performance Optimization
+```typescript
+// Split context if performance issues occur
+const TimerStateContext = createContext<TimerState | null>(null);
+const TimerDispatchContext = createContext<React.Dispatch<TimerAction> | null>(null);
+
+// Components that only read state don't re-render on dispatch changes
+```

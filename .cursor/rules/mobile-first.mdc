@@ -1,0 +1,321 @@
+---
+description: Mobile-first design principles and touch optimization for deadhang timer app
+---
+
+# Mobile-First Design & Touch Optimization
+
+## Primary Target Browsers
+- **iOS Safari 14+**: Primary target, PWA installation support
+- **Chrome Mobile 90+**: Android primary browser
+- **Samsung Internet**: Alternative Android browser
+- **Desktop**: Secondary target, responsive design
+
+## Mobile-First Principles
+
+### 1. Touch Targets
+```css
+/* Minimum touch target sizes */
+.touch-target {
+  min-height: 44px; /* iOS recommended minimum */
+  min-width: 44px;
+  padding: 12px; /* Additional padding for easier hitting */
+}
+
+/* Large timer controls for deadhang training */
+.timer-control-button {
+  min-height: 64px;
+  min-width: 64px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Extra large timer display for visibility from distance */
+.timer-display {
+  font-size: clamp(4rem, 15vw, 8rem);
+  font-weight: 800;
+  line-height: 1;
+}
+```
+
+### 2. Responsive Breakpoints
+```typescript
+// TailwindCSS responsive design
+const responsiveClasses = {
+  // Mobile-first approach
+  mobile: 'text-4xl p-4',        // Default (≥0px)
+  tablet: 'md:text-6xl md:p-6',  // ≥768px
+  desktop: 'lg:text-8xl lg:p-8'  // ≥1024px
+};
+
+// CSS Custom Properties for consistency
+:root {
+  --spacing-xs: 0.5rem;   /* 8px */
+  --spacing-sm: 1rem;     /* 16px */
+  --spacing-md: 1.5rem;   /* 24px */
+  --spacing-lg: 2rem;     /* 32px */
+  --spacing-xl: 3rem;     /* 48px */
+  
+  /* Touch-friendly sizes */
+  --touch-target: 44px;
+  --touch-target-lg: 64px;
+}
+```
+
+### 3. Mobile Navigation
+```typescript
+// Mobile-optimized component structure
+interface MobileTimerLayoutProps {
+  children: React.ReactNode;
+}
+
+const MobileTimerLayout: React.FC<MobileTimerLayoutProps> = ({ children }) => {
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* Fixed header with key controls */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur">
+        <div className="flex items-center justify-between p-4">
+          <ThemeToggle />
+          <h1 className="text-lg font-semibold">Deadhang Timer</h1>
+          <SettingsButton />
+        </div>
+      </header>
+      
+      {/* Main content with timer display */}
+      <main className="flex-1 pt-16 pb-24 px-4">
+        {children}
+      </main>
+      
+      {/* Fixed bottom controls */}
+      <footer className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur">
+        <TimerControls />
+      </footer>
+    </div>
+  );
+};
+```
+
+## Touch Interaction Patterns
+
+### 1. Large Timer Controls
+```typescript
+interface TimerControlsProps {
+  onStart: () => void;
+  onPause: () => void;
+  onStop: () => void;
+  isRunning: boolean;
+}
+
+const TimerControls: React.FC<TimerControlsProps> = ({
+  onStart, onPause, onStop, isRunning
+}) => {
+  return (
+    <div className="grid grid-cols-3 gap-4 p-4">
+      {/* Large, easily tappable buttons */}
+      <button
+        onClick={onStart}
+        className="
+          touch-target-lg bg-green-500 text-white rounded-xl
+          font-semibold text-lg
+          active:bg-green-600 active:scale-95
+          transition-all duration-150
+          disabled:opacity-50 disabled:active:scale-100
+        "
+        disabled={isRunning}
+      >
+        Start
+      </button>
+      
+      <button
+        onClick={onPause}
+        className="
+          touch-target-lg bg-yellow-500 text-white rounded-xl
+          font-semibold text-lg
+          active:bg-yellow-600 active:scale-95
+          transition-all duration-150
+        "
+      >
+        {isRunning ? 'Pause' : 'Resume'}
+      </button>
+      
+      <button
+        onClick={onStop}
+        className="
+          touch-target-lg bg-red-500 text-white rounded-xl
+          font-semibold text-lg
+          active:bg-red-600 active:scale-95
+          transition-all duration-150
+        "
+      >
+        Stop
+      </button>
+    </div>
+  );
+};
+```
+
+### 2. Swipe Gestures (Optional)
+```typescript
+// Optional: Swipe gestures for phase navigation
+const useSwipeGestures = (
+  onSwipeLeft: () => void,
+  onSwipeRight: () => void
+) => {
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: TouchEvent): void => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: TouchEvent): void => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = (): void => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) onSwipeLeft();
+    if (isRightSwipe) onSwipeRight();
+  };
+
+  return { onTouchStart, onTouchMove, onTouchEnd };
+};
+```
+
+## Performance Optimizations
+
+### 1. Mobile Performance
+```typescript
+// Optimize for mobile performance
+const MobileOptimizedTimerDisplay: React.FC<TimerDisplayProps> = ({
+  timeLeft, currentPhase
+}) => {
+  // Use transform instead of changing layout properties
+  const scaleClass = currentPhase === 'hang' ? 'scale-110' : 'scale-100';
+  
+  return (
+    <div className={`
+      timer-display
+      transition-transform duration-300 ease-out
+      ${scaleClass}
+      will-change-transform
+    `}>
+      {formatTime(timeLeft)}
+    </div>
+  );
+};
+
+// Debounce rapid interactions
+const useDebouncedButton = (callback: () => void, delay: number = 300) => {
+  const [isDebounced, setIsDebounced] = useState(false);
+  
+  const debouncedCallback = useCallback(() => {
+    if (isDebounced) return;
+    
+    setIsDebounced(true);
+    callback();
+    
+    setTimeout(() => setIsDebounced(false), delay);
+  }, [callback, delay, isDebounced]);
+  
+  return debouncedCallback;
+};
+```
+
+### 2. Viewport Configuration
+```html
+<!-- index.html - Mobile viewport setup -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<!-- PWA meta tags -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#000000">
+```
+
+## Mobile-Specific Features
+
+### 1. Screen Wake Lock (Prevent Sleep)
+```typescript
+// Keep screen awake during timer
+const useWakeLock = () => {
+  const [wakeLock, setWakeLock] = useState<WakeLockSentinel | null>(null);
+
+  const requestWakeLock = async (): Promise<void> => {
+    try {
+      if ('wakeLock' in navigator) {
+        const lock = await navigator.wakeLock.request('screen');
+        setWakeLock(lock);
+      }
+    } catch (error) {
+      console.warn('Wake Lock not supported or failed:', error);
+    }
+  };
+
+  const releaseWakeLock = async (): Promise<void> => {
+    if (wakeLock) {
+      await wakeLock.release();
+      setWakeLock(null);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      releaseWakeLock();
+    };
+  }, []);
+
+  return { requestWakeLock, releaseWakeLock };
+};
+```
+
+### 2. Haptic Feedback
+```typescript
+// Add haptic feedback for better mobile experience
+const useHapticFeedback = () => {
+  const lightHaptic = (): void => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
+  };
+
+  const mediumHaptic = (): void => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50);
+    }
+  };
+
+  const strongHaptic = (): void => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate([100, 30, 100]);
+    }
+  };
+
+  return { lightHaptic, mediumHaptic, strongHaptic };
+};
+```
+
+## Mobile Design Rules
+1. **Touch Targets**: Minimum 44px, prefer 64px for primary actions
+2. **Thumb Zones**: Place primary controls in easy thumb reach
+3. **Visual Hierarchy**: Use size, color, and spacing to guide attention
+4. **Performance**: Optimize animations and transitions for 60fps
+5. **Accessibility**: Support screen readers and keyboard navigation
+6. **Offline**: Full functionality without internet connection
+7. **Battery**: Minimize battery drain with efficient timers
+
+## Testing Checklist
+- [ ] Test on actual iOS and Android devices
+- [ ] Verify touch target sizes with real finger testing
+- [ ] Test in landscape and portrait orientations
+- [ ] Verify PWA installation and offline functionality
+- [ ] Test audio playback with screen locked
+- [ ] Validate performance on lower-end devices
+- [ ] Test wake lock functionality during long timers

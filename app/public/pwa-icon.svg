@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="#1f2937"/>
+  
+  <!-- Main timer circle -->
+  <circle cx="256" cy="256" r="180" fill="#3b82f6"/>
+  <circle cx="256" cy="256" r="140" fill="none" stroke="white" stroke-width="8"/>
+  
+  <!-- Clock hands pointing to 12 and 3 (deadhang position) -->
+  <line x1="256" y1="256" x2="256" y2="140" stroke="white" stroke-width="12" stroke-linecap="round"/>
+  <line x1="256" y1="256" x2="340" y2="256" stroke="white" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Hour markers -->
+  <circle cx="256" cy="120" r="6" fill="white"/>
+  <circle cx="376" cy="256" r="6" fill="white"/>
+  <circle cx="256" cy="392" r="6" fill="white"/>
+  <circle cx="136" cy="256" r="6" fill="white"/>
+  
+  <!-- Center dot -->
+  <circle cx="256" cy="256" r="10" fill="white"/>
+  
+  <!-- Climbing grip representation -->
+  <path d="M 200 90 Q 256 70 312 90 Q 320 100 312 110 Q 256 130 200 110 Q 192 100 200 90 Z" fill="#fbbf24"/>
+  
+  <!-- Small climbing elements (bolts/holds) -->
+  <circle cx="180" cy="180" r="4" fill="#fbbf24"/>
+  <circle cx="332" cy="180" r="4" fill="#fbbf24"/>
+  <circle cx="180" cy="332" r="4" fill="#fbbf24"/>
+  <circle cx="332" cy="332" r="4" fill="#fbbf24"/>
+</svg> 

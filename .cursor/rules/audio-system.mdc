@@ -1,0 +1,157 @@
+---
+description: Audio system implementation with Web Audio API and predefined sound files
+---
+
+# Audio System Architecture
+
+## Audio Requirements
+- **Must-Have Feature**: Audio is critical for deadhang training
+- **Sound Files**: Predefined MP3/OGG files (NO speech synthesis)
+- **Web Audio API**: For precise timing and volume control
+- **Fallback**: HTMLAudioElement if Web Audio API unavailable
+
+## Required Sound Files
+Place in `public/audio/`:
+- `start.mp3` - Training session begins
+- `end.mp3` - Training session completed
+- `phase-change.mp3` - Switch between hang/rest phases  
+- `countdown.mp3` - Last 3 seconds of any phase
+
+## AudioService Interface
+```typescript
+// services/AudioService.ts
+interface AudioService {
+  // Core playback methods
+  playStartSound(): Promise<void>;
+  playEndSound(): Promise<void>;
+  playPhaseChangeSound(): Promise<void>;
+  playCountdownTick(): Promise<void>;
+  
+  // Settings
+  setVolume(level: number): void; // 0.0 to 1.0
+  isAudioEnabled(): boolean;
+  toggleAudio(): void;
+  
+  // Lifecycle
+  initialize(): Promise<void>;
+  destroy(): void;
+}
+```
+
+## Implementation Pattern
+```typescript
+class WebAudioService implements AudioService {
+  private audioContext: AudioContext | null = null;
+  private audioBuffers: Map<string, AudioBuffer> = new Map();
+  private volume: number = 0.8;
+  private enabled: boolean = true;
+
+  async initialize(): Promise<void> {
+    try {
+      // Modern browsers require user interaction for AudioContext
+      this.audioContext = new AudioContext();
+      await this.loadAudioFiles();
+    } catch (error) {
+      console.warn('Web Audio API not available, falling back to HTMLAudioElement');
+      // Fallback implementation
+    }
+  }
+
+  private async loadAudioFiles(): Promise<void> {
+    const soundFiles = ['start', 'end', 'phase-change', 'countdown'];
+    
+    for (const soundName of soundFiles) {
+      try {
+        const response = await fetch(`/audio/${soundName}.mp3`);
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await this.audioContext!.decodeAudioData(arrayBuffer);
+        this.audioBuffers.set(soundName, audioBuffer);
+      } catch (error) {
+        console.error(`Failed to load sound: ${soundName}`, error);
+      }
+    }
+  }
+
+  async playStartSound(): Promise<void> {
+    await this.playSound('start');
+  }
+
+  private async playSound(soundName: string): Promise<void> {
+    if (!this.enabled || !this.audioContext) return;
+
+    const buffer = this.audioBuffers.get(soundName);
+    if (!buffer) return;
+
+    const source = this.audioContext.createBufferSource();
+    const gainNode = this.audioContext.createGain();
+    
+    source.buffer = buffer;
+    gainNode.gain.value = this.volume;
+    
+    source.connect(gainNode);
+    gainNode.connect(this.audioContext.destination);
+    
+    source.start();
+  }
+}
+```
+
+## User Interaction Requirement
+```typescript
+// Audio requires user interaction - handle in component
+const handleFirstUserAction = async (): Promise<void> => {
+  try {
+    await audioService.initialize();
+    // Audio is now ready
+  } catch (error) {
+    console.error('Audio initialization failed:', error);
+  }
+};
+
+// Call on first button click or touch
+<button onClick={handleFirstUserAction}>
+  Start Timer
+</button>
+```
+
+## Integration with Timer Context
+```typescript
+// In TimerProvider or custom hook
+const useAudio = () => {
+  const audioService = useRef<AudioService>(new WebAudioService());
+  
+  useEffect(() => {
+    return () => {
+      audioService.current.destroy();
+    };
+  }, []);
+
+  return audioService.current;
+};
+
+// In timer reducer or effect
+useEffect(() => {
+  if (state.currentPhase === 'start' && state.timeLeft === 0) {
+    audioService.playPhaseChangeSound();
+  }
+  
+  if (state.timeLeft <= 3 && state.timeLeft > 0) {
+    audioService.playCountdownTick();
+  }
+}, [state.currentPhase, state.timeLeft]);
+```
+
+## Audio Rules
+1. **User Activation**: Always require user gesture before first audio play
+2. **Error Handling**: Graceful fallback if audio fails
+3. **Volume Control**: Respect user volume preferences
+4. **Timing**: Use Web Audio API for precise timing alignment
+5. **Resource Management**: Clean up audio contexts on unmount
+6. **Mobile**: Test thoroughly on iOS Safari (audio restrictions)
+
+## Testing Considerations
+- Test with audio disabled
+- Test on mobile browsers (iOS Safari restrictions)
+- Test with headphones vs speakers
+- Test volume levels and muting
+- Test rapid timer phase changes

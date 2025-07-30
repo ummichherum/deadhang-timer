@@ -69,12 +69,12 @@ export const PhaseIndicator: React.FC<PhaseIndicatorProps> = ({
     // Special rotation symbol between hang and rest
     if (fromPhase === 'hang' && toPhase === 'rest') {
       return (
-        <div className="flex items-center justify-center mx-2 sm:mx-3">
-          <div className="flex flex-col items-center min-w-[40px]">
-            <span className="text-lg sm:text-xl text-blue-500 dark:text-blue-400 animate-spin-slow">
+        <div className="flex items-center justify-center mx-0.5 sm:mx-1">
+          <div className="flex flex-col items-center min-w-[30px] max-w-[45px]">
+            <span className="text-sm sm:text-base text-blue-500 dark:text-blue-400 animate-spin-slow">
               ↻
             </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
               {totalReps > 1 ? `${totalReps}×` : ''}
             </span>
           </div>
@@ -84,7 +84,7 @@ export const PhaseIndicator: React.FC<PhaseIndicatorProps> = ({
     
     // Regular connecting line
     return (
-      <div className="flex-1 h-0.5 bg-gray-300 dark:bg-gray-600 mx-2 sm:mx-3 max-w-6 sm:max-w-10">
+      <div className="flex-1 h-0.5 bg-gray-300 dark:bg-gray-600 mx-0.5 sm:mx-1 max-w-3 sm:max-w-6">
       </div>
     );
   };

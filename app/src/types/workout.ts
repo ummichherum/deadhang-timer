@@ -90,9 +90,9 @@ export const WORKOUT_TEMPLATES: WorkoutTemplate[] = [
     config: {
       name: 'Anfänger Template',
       repetitions: 3,
-      hangTimes: 30,
-      pauseTimes: 30,
-      startPause: 10,
+      hangTimes: 5,
+      pauseTimes: 5,
+      startPause: 5,
       difficulty: 'beginner'
     }
   },

@@ -258,12 +258,19 @@ export const useTimerComputed = () => {
   const progress = useMemo(() => {
     if (!state.workoutProfile || state.totalReps === 0) return 0;
     
+    // If workout is finished or in 'end' phase, return 100%
+    if (state.status === 'finished' || state.currentPhase === 'end') {
+      return 100;
+    }
+    
     const completedReps = state.currentRep - 1;
     const repProgress = completedReps / state.totalReps;
     
     // Add progress within current rep based on phase
     let phaseProgress = 0;
-    if (state.currentPhase === 'hang') {
+    if (state.currentPhase === 'start') {
+      phaseProgress = 0; // Beginning of workout
+    } else if (state.currentPhase === 'hang') {
       phaseProgress = 0.33; // 1/3 through the rep
     } else if (state.currentPhase === 'rest') {
       phaseProgress = 0.67; // 2/3 through the rep
@@ -272,7 +279,7 @@ export const useTimerComputed = () => {
     const currentRepProgress = phaseProgress / state.totalReps;
     
     return Math.min(100, (repProgress + currentRepProgress) * 100);
-  }, [state.currentPhase, state.currentRep, state.totalReps, state.workoutProfile]);
+  }, [state.currentPhase, state.currentRep, state.totalReps, state.workoutProfile, state.status]);
 
   return {
     progress,
